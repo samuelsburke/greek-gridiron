@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Greek Gridiron 2026 | Phi Gamma Delta OSU</title>
+
+  <!-- Firebase compat CDN (v10) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <!-- vis.js for PERT network -->
+  <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <style>
+    :root {
+      --purple:       #4B2D83;
+      --purple-light: #6B4DB3;
+      --purple-dark:  #311C5A;
+      --gold:         #F5C518;
+      --gold-dark:    #D4A017;
+      --white:        #FFFFFF;
+      --gray-light:   #F4F1FA;
+      --gray:         #E0D8F0;
+      --text-dark:    #1a1226;
+      --text-mid:     #4a3d6b;
+      --green:        #27AE60;
+      --shadow:       0 2px 12px rgba(75,45,131,.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--gray-light);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* ── Setup Overlay ─────────────────────────── */
+    #setup-overlay {
+      position: fixed; inset: 0;
+      background: rgba(49,28,90,.96);
+      z-index: 1000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    #setup-overlay.hidden { display: none; }
+
+    .setup-card {
+      background: white; border-radius: 16px;
+      padding: 2.25rem; max-width: 660px; width: 100%;
+      box-shadow: 0 24px 64px rgba(0,0,0,.45);
+    }
+    .setup-card h2 { color: var(--purple); font-size: 1.4rem; margin-bottom: .5rem; }
+    .setup-card .subtitle { color: var(--text-mid); margin-bottom: 1.25rem; line-height: 1.6; }
+    .setup-card ol { padding-left: 1.3rem; color: var(--text-mid); line-height: 2.1; margin-bottom: 1rem; }
+    .setup-card a { color: var(--purple); font-weight: 600; }
+    .setup-card code {
+      background: var(--gray-light); border: 1px solid var(--gray);
+      border-radius: 4px; padding: 1px 5px;
+      font-family: 'Consolas', monospace; font-size: .88em;
+    }
+    .config-block {
+      background: #1a1226; color: #F5C518;
+      border-radius: 10px; padding: 1rem 1.25rem;
+      font-family: 'Consolas', monospace; font-size: .82rem; line-height: 1.8;
+      margin: 1rem 0; overflow-x: auto; white-space: pre;
+    }
+    .setup-note { font-size: .85rem; color: #999; margin-top: .75rem; line-height: 1.5; }
+
+    /* ── Header ────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple) 100%);
+      color: white; padding: 1.4rem 2rem;
+      display: flex; align-items: center; gap: 1.25rem;
+      box-shadow: 0 4px 20px rgba(49,28,90,.35);
+      flex-wrap: wrap;
+    }
+    .header-logo {
+      width: 54px; height: 54px;
+      background: var(--gold); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: 900;
+      color: var(--purple-dark); flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+    .header-text h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -.4px; }
+    .header-text p  { font-size: .88rem; opacity: .72; margin-top: 3px; }
+    .header-badge {
+      margin-left: auto;
+      background: var(--gold); color: var(--purple-dark);
+      padding: .45rem 1.1rem; border-radius: 20px;
+      font-weight: 700; font-size: .88rem; white-space: nowrap;
+    }
+
+    /* ── Progress Bar ──────────────────────────── */
+    .progress-wrap {
+      background: var(--purple-dark);
+      padding: .7rem 2rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .progress-label { color: rgba(255,255,255,.7); font-size: .82rem; white-space: nowrap; min-width: 110px; }
+    .progress-track {
+      flex: 1; height: 9px;
+      background: rgba(255,255,255,.18); border-radius: 5px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: var(--gold);
+      border-radius: 5px; transition: width .45s ease;
+    }
+    .progress-pct { color: var(--gold); font-weight: 700; font-size: .9rem; width: 38px; text-align: right; }
+
+    /* ── Tab Nav ───────────────────────────────── */
+    .tab-nav {
+      background: white; padding: 0 2rem;
+      display: flex; border-bottom: 2px solid var(--gray);
+      box-shadow: 0 2px 8px rgba(75,45,131,.07);
+    }
+    .tab-btn {
+      padding: .9rem 1.5rem; border: none; background: none;
+      font-size: .95rem; font-weight: 600; color: var(--text-mid);
+      cursor: pointer; border-bottom: 3px solid transparent;
+      margin-bottom: -2px; transition: color .15s, border-color .15s;
+    }
+    .tab-btn:hover { color: var(--purple); }
+    .tab-btn.active { color: var(--purple); border-bottom-color: var(--gold); }
+
+    /* ── Tab Content ───────────────────────────── */
+    .tab-content { display: none; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+    .tab-content.active { display: block; }
+
+    /* ── Plan Tab ──────────────────────────────── */
+    .plan-card {
+      background: white; border-radius: 12px;
+      padding: 1.75rem 2rem; margin-bottom: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .plan-card h2 {
+      color: var(--purple); font-size: 1.2rem;
+      border-bottom: 2px solid var(--gold);
+      padding-bottom: .45rem; margin-bottom: 1.1rem;
+    }
+    .plan-card h3 { color: var(--purple-light); margin: 1.1rem 0 .4rem; font-size: .98rem; }
+    .plan-card p  { line-height: 1.75; color: var(--text-mid); margin-bottom: .7rem; }
+    .plan-card ul, .plan-card ol { padding-left: 1.35rem; color: var(--text-mid); line-height: 1.95; }
+    .plan-card li { margin-bottom: .2rem; }
+
+    .plan-table { width: 100%; border-collapse: collapse; margin: .75rem 0; font-size: .9rem; }
+    .plan-table th {
+      background: var(--purple); color: white;
+      padding: .6rem 1rem; text-align: left;
+    }
+    .plan-table th:first-child { border-radius: 6px 0 0 0; }
+    .plan-table th:last-child  { border-radius: 0 6px 0 0; }
+    .plan-table td { padding: .6rem 1rem; border-bottom: 1px solid var(--gray); color: var(--text-mid); }
+    .plan-table tr:last-child td { border-bottom: none; }
+    .plan-table tr:nth-child(even) td { background: var(--gray-light); }
+
+    .highlight {
+      background: var(--gold); color: var(--purple-dark);
+      padding: .1rem .45rem; border-radius: 4px; font-weight: 700;
+    }
+    .alert-box {
+      background: #FFF8E1; border-left: 4px solid var(--gold);
+      padding: .9rem 1.1rem; border-radius: 0 8px 8px 0;
+      margin: 1rem 0; color: var(--text-mid); line-height: 1.65;
+    }
+    .open-item {
+      background: var(--gray-light); border-left: 4px solid var(--purple-light);
+      padding: .7rem 1rem; border-radius: 0 8px 8px 0;
+      margin: .5rem 0; font-size: .93rem; color: var(--text-mid); line-height: 1.5;
+    }
+
+    /* ── Checklist Tab ─────────────────────────── */
+    .checklist-group {
+      background: white; border-radius: 12px;
+      margin-bottom: 1.1rem; overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .group-header {
+      background: var(--purple); color: white;
+      padding: .8rem 1.25rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none; transition: background .15s;
+    }
+    .group-header:hover { background: var(--purple-light); }
+    .group-header-left { display: flex; align-items: center; gap: .6rem; }
+    .group-badge {
+      background: rgba(255,255,255,.18);
+      border-radius: 12px; padding: .15rem .6rem;
+      font-size: .8rem; font-weight: 600;
+    }
+    .group-badge.done { background: var(--gold); color: var(--purple-dark); }
+    .group-chevron { font-size: .7rem; transition: transform .2s; }
+    .group-chevron.open { transform: rotate(90deg); }
+
+    .group-items { }
+    .group-items.collapsed { display: none; }
+
+    .check-item {
+      display: flex; align-items: flex-start; gap: .85rem;
+      padding: .75rem 1.25rem;
+      border-bottom: 1px solid var(--gray-light);
+      cursor: pointer; transition: background .12s;
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-item:hover { background: var(--gray-light); }
+    .check-item.done .item-label {
+      text-decoration: line-through; color: #b0a8c8;
+    }
+    .check-item input[type="checkbox"] {
+      width: 17px; height: 17px; margin-top: 2px;
+      flex-shrink: 0; accent-color: var(--purple);
+      cursor: pointer;
+    }
+    .item-label { font-size: .93rem; line-height: 1.55; color: var(--text-mid); }
+
+    /* ── PERT Tab ──────────────────────────────── */
+    .pert-legend {
+      background: white; border-radius: 12px;
+      padding: 1rem 1.5rem; margin-bottom: 1.25rem;
+      box-shadow: var(--shadow);
+      display: flex; align-items: center; flex-wrap: wrap; gap: 1.25rem;
+    }
+    .pert-legend strong { color: var(--purple); font-size: .9rem; }
+    .legend-item { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: var(--text-mid); }
+    .ldot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .ldot.complete  { background: var(--green); }
+    .ldot.ready     { background: var(--gold); }
+    .ldot.waiting   { background: #CCCCCC; }
+    .ldot.milestone { background: var(--purple); border-radius: 3px; }
+
+    #pert-wrap {
+      background: white; border-radius: 12px;
+      padding: .75rem; box-shadow: var(--shadow);
+      height: 580px; position: relative; overflow: hidden;
+    }
+    #pert-network { width: 100%; height: 100%; }
+
+    .pert-instructions {
+      font-size: .8rem; color: #aaa; text-align: center;
+      margin-top: .5rem; padding: 0 2rem;
+    }
+
+    /* ── Sync Badge ────────────────────────────── */
+    .sync-badge {
+      position: fixed; bottom: 1.25rem; right: 1.25rem;
+      background: white; border-radius: 20px;
+      padding: .45rem .9rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,.14);
+      display: flex; align-items: center; gap: .45rem;
+      font-size: .78rem; color: var(--text-mid);
+      z-index: 200;
+    }
+    .sdot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+    .sdot.syncing { background: var(--gold); animation: blink 1s infinite; }
+    .sdot.offline { background: #e74c3c; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    @media (max-width: 600px) {
+      header { padding: 1rem; }
+      .header-badge { margin-left: 0; }
+      .tab-content { padding: 1rem; }
+      .tab-btn { padding: .75rem .85rem; font-size: .82rem; }
+      #pert-wrap { height: 380px; }
+      .plan-card { padding: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     SETUP OVERLAY — hidden once Firebase is configured
+═══════════════════════════════════════════════ -->
+<div id="setup-overlay">
+  <div class="setup-card">
+    <h2>🏈 One-Time Firebase Setup</h2>
+    <p class="subtitle">Greek Gridiron uses a free Firebase database so every brother sees live checklist updates. Takes about 5 minutes — only one person needs to do this.</p>
+    <ol>
+      <li>Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> and sign in with a Google account</li>
+      <li>Click <strong>Add Project</strong> → name it <code>greek-gridiron</code> → disable Google Analytics → Create Project</li>
+      <li>In the left sidebar, click <strong>Firestore Database</strong> → <strong>Create database</strong> → choose <strong>Start in test mode</strong> → select <em>us-central1</em> → Enable</li>
+      <li>Click the ⚙️ gear icon (top-left) → <strong>Project settings</strong> → scroll to <strong>Your apps</strong> → click the <code>&lt;/&gt;</code> web icon → register app (any nickname) → copy the <code>firebaseConfig</code> shown</li>
+      <li>Open <code>index.html</code> and replace the placeholder config block near the top of the <code>&lt;script&gt;</code> section with your copied config, then re-deploy to GitHub Pages</li>
+    </ol>
+    <div class="config-block">// Find this block and replace it:
+const firebaseConfig = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};</div>
+    <p class="setup-note">After setup, share the GitHub Pages URL with your chapter. Checkboxes sync in real-time for everyone. Firebase free tier handles this easily — no cost.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════════ -->
+<div id="app">
+
+  <header>
+    <div class="header-logo">ΦΓΔ</div>
+    <div class="header-text">
+      <h1>Greek Gridiron 2026</h1>
+      <p>Phi Gamma Delta &nbsp;·&nbsp; Oklahoma State University &nbsp;·&nbsp; Philanthropy Event</p>
+    </div>
+    <div class="header-badge">📅 Sept 26, 2026</div>
+  </header>
+
+  <div class="progress-wrap">
+    <span class="progress-label">Overall Progress</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <span class="progress-pct" id="progress-pct">0%</span>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active"  onclick="switchTab('plan',this)">📋 Plan</button>
+    <button class="tab-btn"         onclick="switchTab('checklist',this)">✅ Checklist</button>
+    <button class="tab-btn"         onclick="switchTab('pert',this)">📊 PERT Chart</button>
+  </div>
+
+  <!-- ═══════ PLAN TAB ═══════ -->
+  <div id="tab-plan" class="tab-content active">
+
+    <div class="plan-card">
+      <h2>Event Overview</h2>
+      <table class="plan-table">
+        <tr><th>Detail</th><th>Info</th></tr>
+        <tr><td><strong>Format</strong></td><td>7v7 flag football tournament</td></tr>
+        <tr><td><strong>Host</strong></td><td>Phi Gamma Delta — Sigma Omicron chapter (ranked #4 at OSU)</td></tr>
+        <tr><td><strong>Beneficiary</strong></td><td>A child/family in need due to illness — identify before any promotion</td></tr>
+        <tr><td><strong>Date</strong></td><td><span class="highlight">Saturday, September 26, 2026</span>&nbsp; — OSU away at West Virginia</td></tr>
+        <tr><td><strong>Teams</strong></td><td>8–12 fraternities (22 IFC chapters = full pool); sororities support via banner/spirit competition</td></tr>
+        <tr><td><strong>Entry Fee</strong></td><td>$175 early-bird (cutoff ~Sept 5) / $200 standard</td></tr>
+      </table>
+      <div class="alert-box">
+        <strong>Why this has legs:</strong> OSU's Greek community raised $634,000 in philanthropy in 2023 with 4,000+ members across 51 organizations. No Greek-hosted 7v7 philanthropy flag football tournament currently exists at OSU — Greek Gridiron fills a real gap and has a clear path to becoming a signature annual event.
+      </div>
+    </div>
+
+    <div class="plan-card">
+      <h2>Tournament Structure</h2>
+      <h3>Bracket Format</h3>
+      <ul>
+        <li><strong>8 teams:</strong> 2 pools of 4 → top 2 from each advance → semifinals → championship</li>
+        <li><strong>10–12 teams:</strong> 3 pools (3–4 teams each) → top teams advance → quarterfinals → semis → championship</li>
+      </ul>
+      <h3>Game Format</h3>
+      <ul>
+        <li>Pool play: 20-minute halves, running clock</li>
+        <li>Playoffs: 25-minute halves</li>
+        <li>Championship: 30-minute halves</li>
+        <li><strong>Hard stop: all play and ceremony must wrap by 9:30 PM</strong> — Stillwater 10 PM noise ordinance</li>
+      </ul>
+      <p style="font-size:.83rem;font-style:italic;color:#aaa;margin-top:.6rem;">OSU hosted the 2023 NIRSA Flag Football National Championship — Colvin staff are experienced with multi-field tournament logistics.</p>
+      <h3>Venue</h3>
+      <ul>
+        <li><strong>Pool/playoff games:</strong> Colvin Recreation Center fields (Western Fields, Willis Fields, Colvin Fields)
+          <br><em>Contact: Beth Penland — beth.penland@okstate.edu / (405) 744-5510</em>
+          <br><em>Submit reservation form at least 7 business days before the event</em>
+          <br><em>Fee waiver does NOT apply (teams are charged entry) — budget field rental cost</em>
+        </li>
+        <li><strong>Championship game:</strong> OSU practice facility turf — confirm with your contact before promoting</li>
+        <li><strong>Fallback:</strong> Colvin fields for championship if turf doesn't work out</li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h2>Revenue Streams</h2>
+      <table class="plan-table">
+        <tr><th>Source</th><th>Notes</th><th>Est. Revenue</th></tr>
+        <tr><td>Team entry fees</td><td>$175 early-bird / $200 standard; ~10 teams</td><td>~$1,900</td></tr>
+        <tr><td>Spectator tickets</td><td>$5/ticket; leverage homecoming pairings for crowd</td><td>Variable</td></tr>
+        <tr><td>Concessions</td><td>Dirty Soda bar + Snowcones (2–3 items max)</td><td>Variable</td></tr>
+        <tr><td>SGA co-sponsorship</td><td>Up to $1,000/semester for recognized orgs (capped at 50% of event budget)</td><td>Up to $1,000</td></tr>
+        <tr><td><strong>Realistic donation target</strong></td><td>After costs, all streams running</td><td><strong>$3,000–$5,000</strong></td></tr>
+      </table>
+    </div>
+
+    <div class="plan-card">
+      <h2>Sorority Involvement</h2>
+      <p>OSU has <strong>12 Panhellenic sororities</strong> and <strong>13 established homecoming fraternity-sorority pairs</strong> — a ready-made framework for sorority involvement.</p>
+      <ul>
+        <li><strong>Banner Competition:</strong> Each sorority paired with a competing fraternity creates a banner; judged by a neutral party</li>
+        <li><strong>"Greek Goddess" Spirit Award:</strong> Awarded to the sorority with the best overall crowd energy, cheering, and spirit throughout the day — adds real incentive beyond the banner comp</li>
+        <li><strong>Homecoming Pairing Hook:</strong> Lean into existing homecoming pairings so each sorority is naturally cheering for "their" team</li>
+        <li><strong>Ticket Sales:</strong> Sorority chapters purchase ticket blocks; drives revenue and crowd energy</li>
+        <li><strong>Concession Volunteers:</strong> Option to involve sorority members in running the Dirty Soda/Snowcone booth</li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h2>Concessions</h2>
+      <ul>
+        <li>Dirty Soda bar — high margin, easy to run</li>
+        <li>Snowcone machine</li>
+        <li>Stick to 2–3 items max — simplicity is the priority</li>
+        <li>Assign 2–3 volunteers to run the booth all day</li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h2>Tradition &amp; Trophy</h2>
+      <ul>
+        <li>Commission a football-shaped traveling trophy, engraved annually with the winning house</li>
+        <li>Winning house holds the trophy until the following year's event</li>
+        <li>Frame this prominently in all outreach — makes the $200 entry feel meaningful beyond the donation</li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h2>Contracts &amp; Registration</h2>
+      <ul>
+        <li>Base on Beta's King of the Court contract — modify for 7v7 flag football rules, liability, and conduct</li>
+        <li>All participating houses sign before their team is confirmed</li>
+        <li>Contract must include: roster submission deadline, code of conduct, forfeiture/no-show policy, entry fee payment deadline</li>
+        <li><strong>Early-bird deadline:</strong> ~Sept 5 for $175 rate; $200 after</li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h2>Administrative &amp; Permits <span style="font-size:.8rem;font-weight:400;color:#aaa;">(start these first)</span></h2>
+      <ul>
+        <li>Submit <strong>Okie811 web ticket</strong> — utility clearance required for outdoor venue</li>
+        <li>Submit event to <strong>OSU Meeting &amp; Conference Services</strong></li>
+        <li>Contact <strong>Campus Life</strong> for occupancy load calculation — required before ticket sales begin</li>
+        <li>Apply for <strong>SGA co-sponsorship</strong> — up to $1,000, limited funds, submit early</li>
+        <li>Poster/promotional permits available at <strong>179 Student Union</strong></li>
+      </ul>
+    </div>
+
+    <div class="plan-card">
+      <h2>Open Items</h2>
+      <div class="open-item">1. <strong>Beneficiary:</strong> Identify the specific child/family or partner organization before promoting the event</div>
+      <div class="open-item">2. <strong>Championship venue:</strong> Get yes/no on OSU practice facility turf before committing in promotions</div>
+      <div class="open-item">3. <strong>Colvin field cost:</strong> Get rental quote from Beth Penland; build into budget</div>
+      <div class="open-item">4. <strong>Early-bird cutoff:</strong> Recommend ~Sept 5, 2026</div>
+    </div>
+
+  </div><!-- /tab-plan -->
+
+  <!-- ═══════ CHECKLIST TAB ═══════ -->
+  <div id="tab-checklist" class="tab-content">
+    <div id="checklist-root"></div>
+  </div>
+
+  <!-- ═══════ PERT TAB ═══════ -->
+  <div id="tab-pert" class="tab-content">
+    <div class="pert-legend">
+      <strong>Node Status:</strong>
+      <div class="legend-item"><div class="ldot complete"></div> Complete</div>
+      <div class="legend-item"><div class="ldot ready"></div> Ready to Start</div>
+      <div class="legend-item"><div class="ldot waiting"></div> Waiting on Dependencies</div>
+      <div class="legend-item"><div class="ldot milestone"></div> Key Milestone</div>
+    </div>
+    <div id="pert-wrap">
+      <div id="pert-network"></div>
+    </div>
+    <p class="pert-instructions">Drag to pan · Scroll to zoom · Nodes update automatically as you check items off</p>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Sync indicator -->
+<div class="sync-badge">
+  <div class="sdot" id="sdot"></div>
+  <span id="slabel">Connecting…</span>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// ⚙️  PASTE YOUR FIREBASE CONFIG HERE
+// ══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+// ══════════════════════════════════════════════════════
+
+// ── Checklist Definition ────────────────────────────────────────────────
+const GROUPS = [
+  {
+    id: "admin_permits", label: "Administrative & Permits", icon: "📄",
+    items: [
+      { id: "confirm_date",        text: "Confirm date: Saturday, September 26, 2026",                                                                    pert: "confirm_date" },
+      { id: "okie811",             text: "Submit Okie811 web ticket (utility clearance for outdoor venue)",                                                pert: "permits" },
+      { id: "meeting_conference",  text: "Submit event to OSU Meeting & Conference Services",                                                              pert: "permits" },
+      { id: "occupancy",           text: "Contact Campus Life for occupancy load calculation — required before selling tickets",                           pert: "occupancy_tickets" },
+      { id: "sga",                 text: "Apply for SGA co-sponsorship (up to $1,000 — submit early, funds are limited)",                                  pert: "sga" },
+      { id: "poster_permits",      text: "Obtain poster/promotional permits at 179 Student Union",                                                         pert: null },
+    ]
+  },
+  {
+    id: "logistics", label: "Logistics", icon: "📍",
+    items: [
+      { id: "contact_colvin",      text: "Contact Beth Penland at Colvin for field reservation + cost quote — beth.penland@okstate.edu / (405) 744-5510 — submit form 7+ business days before event", pert: "contact_colvin" },
+      { id: "osu_turf",            text: "Get yes/no from contact on OSU practice facility turf for championship game",                                    pert: "osu_turf" },
+      { id: "identify_beneficiary",text: "Identify specific family or charity beneficiary — required before any public promotion",                         pert: "identify_beneficiary" },
+      { id: "commission_trophy",   text: "Source or commission traveling trophy (football-shaped, engravable annually with winning house)",                 pert: "commission_trophy" },
+    ]
+  },
+  {
+    id: "outreach", label: "Outreach", icon: "📣",
+    items: [
+      { id: "send_registration",   text: "Send interest/registration forms to all 22 IFC chapters",                                                       pert: "send_registration" },
+      { id: "panhellenic",         text: "Coordinate with Panhellenic for sorority banner competition and ticket sales push",                              pert: "panhellenic" },
+    ]
+  },
+  {
+    id: "administrative", label: "Administrative", icon: "📝",
+    items: [
+      { id: "modify_contract",     text: "Modify Beta's King of the Court contract for Greek Gridiron (7v7 rules, liability, conduct, forfeiture policy)", pert: "modify_contract" },
+      { id: "set_earlybird",       text: "Set early-bird ($175) and standard ($200) registration deadlines — recommend early-bird cutoff ~Sept 5",         pert: "early_bird" },
+      { id: "collect_contracts",   text: "Collect signed contracts and entry fees from all participating teams",                                           pert: "collect_teams" },
+      { id: "roster_deadline",     text: "Set roster submission deadline — 1 week before event (~Sept 19)",                                               pert: "roster_deadline" },
+    ]
+  },
+  {
+    id: "dayof", label: "Day-of", icon: "🏈",
+    items: [
+      { id: "setup_concessions",   text: "Set up concession booth (Dirty Soda bar + Snowcones) — 2–3 volunteers assigned",                                pert: null },
+      { id: "post_bracket",        text: "Post bracket and schedule visibly at venue",                                                                    pert: null },
+      { id: "assign_referees",     text: "Assign referees to each field (Colvin officials or chapter RTs)",                                               pert: "assign_referees" },
+      { id: "banner_judge",        text: "Designate neutral banner competition judge",                                                                    pert: null },
+      { id: "goddess_judge",       text: "Designate Greek Goddess spirit award judge",                                                                    pert: null },
+      { id: "closing_ceremony",    text: "Plan closing ceremony: recognize family/beneficiary, present donation, award trophy — all wrapped by 9:30 PM (Stillwater noise ordinance)", pert: null },
+    ]
+  },
+  {
+    id: "postEvent", label: "Post-Event", icon: "🎉",
+    items: [
+      { id: "post_results",        text: "Post final standings and winners on social media — tag all participating houses",                                pert: "post_event" },
+      { id: "present_donation",    text: "Present check or donation to family/charity — photo opportunity for chapter PR",                                pert: "post_event" },
+      { id: "survey_houses",       text: "Survey participating houses for Year 2 feedback",                                                               pert: "post_event" },
+      { id: "store_trophy",        text: "Store trophy with winning house; document tradition for future philanthropy chairs",                             pert: "post_event" },
+    ]
+  }
+];
+
+// ── PERT Definition ─────────────────────────────────────────────────────
+const PERT_NODES = [
+  { id: "start",               label: "START",                        level: 0, type: "start",     checklist: [] },
+  { id: "confirm_date",        label: "Confirm\nSept 26 Date",        level: 1, type: "task",      checklist: ["confirm_date"] },
+  { id: "identify_beneficiary",label: "Identify\nBeneficiary",        level: 1, type: "task",      checklist: ["identify_beneficiary"] },
+  { id: "commission_trophy",   label: "Commission\nTrophy",           level: 1, type: "task",      checklist: ["commission_trophy"] },
+  { id: "contact_colvin",      label: "Reserve\nColvin Fields",       level: 2, type: "task",      checklist: ["contact_colvin"] },
+  { id: "osu_turf",            label: "OSU Turf\nDecision",           level: 2, type: "task",      checklist: ["osu_turf"] },
+  { id: "permits",             label: "Submit\nPermits",              level: 2, type: "task",      checklist: ["okie811","meeting_conference"] },
+  { id: "sga",                 label: "Apply for\nSGA Funding",       level: 2, type: "task",      checklist: ["sga"] },
+  { id: "modify_contract",     label: "Modify\nContract",             level: 2, type: "task",      checklist: ["modify_contract"] },
+  { id: "panhellenic",         label: "Coordinate\nPanhellenic",      level: 2, type: "task",      checklist: ["panhellenic"] },
+  { id: "occupancy_tickets",   label: "Ticket Sale\nPaperwork",       level: 3, type: "task",      checklist: ["occupancy"] },
+  { id: "send_registration",   label: "Send IFC\nRegistration",       level: 3, type: "task",      checklist: ["send_registration"] },
+  { id: "early_bird",          label: "Early-Bird\nDeadline ~Sept 5", level: 3, type: "task",      checklist: ["set_earlybird"] },
+  { id: "collect_teams",       label: "Collect Contracts\n+ Fees",    level: 4, type: "task",      checklist: ["collect_contracts"] },
+  { id: "assign_referees",     label: "Assign\nReferees",             level: 4, type: "task",      checklist: ["assign_referees"] },
+  { id: "roster_deadline",     label: "Roster\nDeadline ~Sept 19",    level: 5, type: "task",      checklist: ["roster_deadline"] },
+  { id: "event_day",           label: "EVENT DAY\nSept 26 🏈",        level: 6, type: "event",     checklist: [] },
+  { id: "post_event",          label: "Post-Event\nWrap-up",          level: 7, type: "end",       checklist: ["post_results","present_donation","survey_houses","store_trophy"] },
+];
+
+const PERT_EDGES = [
+  { from: "start",              to: "confirm_date" },
+  { from: "start",              to: "identify_beneficiary" },
+  { from: "start",              to: "commission_trophy" },
+  { from: "confirm_date",       to: "contact_colvin" },
+  { from: "confirm_date",       to: "osu_turf" },
+  { from: "confirm_date",       to: "permits" },
+  { from: "confirm_date",       to: "sga" },
+  { from: "confirm_date",       to: "modify_contract" },
+  { from: "confirm_date",       to: "panhellenic" },
+  { from: "confirm_date",       to: "send_registration" },
+  { from: "identify_beneficiary",to:"send_registration" },
+  { from: "permits",            to: "occupancy_tickets" },
+  { from: "send_registration",  to: "early_bird" },
+  { from: "modify_contract",    to: "early_bird" },
+  { from: "early_bird",         to: "collect_teams" },
+  { from: "occupancy_tickets",  to: "collect_teams" },
+  { from: "collect_teams",      to: "roster_deadline" },
+  { from: "contact_colvin",     to: "assign_referees" },
+  { from: "commission_trophy",  to: "event_day" },
+  { from: "roster_deadline",    to: "event_day" },
+  { from: "assign_referees",    to: "event_day" },
+  { from: "panhellenic",        to: "event_day" },
+  { from: "collect_teams",      to: "event_day" },
+  { from: "event_day",          to: "post_event" },
+];
+
+// ── State ───────────────────────────────────────────────────────────────
+let state = {};
+let db    = null;
+let pertReady = false;
+let visNodes  = null;
+
+const IS_CONFIGURED = !firebaseConfig.apiKey.startsWith("YOUR_");
+
+// ── Boot ────────────────────────────────────────────────────────────────
+if (IS_CONFIGURED) {
+  document.getElementById('setup-overlay').classList.add('hidden');
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    db.collection('gridiron').doc('checklist')
+      .onSnapshot(snap => {
+        state = snap.data() || {};
+        refresh();
+        setSyncStatus('live');
+      }, err => {
+        setSyncStatus('offline');
+        console.error(err);
+      });
+  } catch(e) {
+    setSyncStatus('offline');
+    console.error(e);
+  }
+} else {
+  setSyncStatus('offline');
+  refresh();
+}
+
+// ── Toggle Item ─────────────────────────────────────────────────────────
+async function toggle(id) {
+  state[id] = !state[id];
+  refresh();
+  if (!db) return;
+  setSyncStatus('syncing');
+  try {
+    await db.collection('gridiron').doc('checklist').set({ [id]: state[id] }, { merge: true });
+  } catch(e) {
+    setSyncStatus('offline');
+    console.error(e);
+  }
+}
+
+// ── Refresh All UI ──────────────────────────────────────────────────────
+function refresh() {
+  renderChecklist();
+  updateProgress();
+  if (pertReady) updatePertColors();
+}
+
+// ── Checklist Render ────────────────────────────────────────────────────
+function renderChecklist() {
+  const root = document.getElementById('checklist-root');
+  if (!root) return;
+  root.innerHTML = '';
+
+  GROUPS.forEach(g => {
+    const doneCount = g.items.filter(i => state[i.id]).length;
+    const allDone   = doneCount === g.items.length;
+
+    const el = document.createElement('div');
+    el.className = 'checklist-group';
+    el.innerHTML = `
+      <div class="group-header" onclick="toggleGroup(this)">
+        <span class="group-header-left">
+          <span>${g.icon} ${g.label}</span>
+          <span class="group-badge ${allDone ? 'done' : ''}">${doneCount}/${g.items.length}</span>
+        </span>
+        <span class="group-chevron open">▶</span>
+      </div>
+      <div class="group-items">
+        ${g.items.map(item => `
+          <div class="check-item ${state[item.id] ? 'done' : ''}" onclick="toggle('${item.id}')">
+            <input type="checkbox" ${state[item.id] ? 'checked' : ''}
+              onclick="event.stopPropagation(); toggle('${item.id}')">
+            <span class="item-label">${item.text}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    root.appendChild(el);
+  });
+}
+
+// ── Collapse/Expand Group ───────────────────────────────────────────────
+function toggleGroup(header) {
+  const items   = header.nextElementSibling;
+  const chevron = header.querySelector('.group-chevron');
+  const collapsed = items.classList.toggle('collapsed');
+  chevron.classList.toggle('open', !collapsed);
+}
+
+// ── Progress Bar ────────────────────────────────────────────────────────
+function updateProgress() {
+  const all  = GROUPS.flatMap(g => g.items);
+  const done = all.filter(i => state[i.id]).length;
+  const pct  = Math.round((done / all.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent  = pct + '%';
+}
+
+// ── Tab Switching ────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'pert' && !pertReady) initPert();
+}
+
+// ── PERT Helpers ─────────────────────────────────────────────────────────
+function isNodeComplete(nodeDef) {
+  if (!nodeDef.checklist.length) return false;
+  return nodeDef.checklist.every(id => state[id]);
+}
+
+function areDepsDone(nodeDef) {
+  const parentIds = PERT_EDGES.filter(e => e.to === nodeDef.id).map(e => e.from);
+  return parentIds.every(pid => {
+    const pDef = PERT_NODES.find(n => n.id === pid);
+    if (!pDef || pDef.type === 'start') return true;
+    return isNodeComplete(pDef);
+  });
+}
+
+function nodeColor(nodeDef) {
+  const PURPLE  = { bg: '#4B2D83', border: '#311C5A', font: '#FFFFFF' };
+  const GOLD    = { bg: '#F5C518', border: '#D4A017', font: '#311C5A' };
+  const GREEN   = { bg: '#27AE60', border: '#1E8449', font: '#FFFFFF' };
+  const GRAY    = { bg: '#CCCCCC', border: '#AAAAAA', font: '#555555' };
+
+  if (nodeDef.type === 'start')  return PURPLE;
+  if (nodeDef.type === 'event')  return PURPLE;
+  if (nodeDef.type === 'end') {
+    return isNodeComplete(nodeDef) ? GREEN : GRAY;
+  }
+  if (isNodeComplete(nodeDef))  return GREEN;
+  if (areDepsDone(nodeDef))      return GOLD;
+  return GRAY;
+}
+
+// ── Init PERT Chart ──────────────────────────────────────────────────────
+function initPert() {
+  pertReady = true;
+
+  visNodes = new vis.DataSet(PERT_NODES.map(n => {
+    const c = nodeColor(n);
+    return {
+      id:    n.id,
+      label: n.label,
+      level: n.level,
+      shape: (n.type === 'start' || n.type === 'event' || n.type === 'end') ? 'box' : 'ellipse',
+      color: { background: c.bg, border: c.border, highlight: { background: c.bg, border: c.border } },
+      font:  { color: c.font, size: 13, face: 'Segoe UI, sans-serif', multi: false },
+      widthConstraint: { minimum: 120, maximum: 150 },
+      margin: 10,
+    };
+  }));
+
+  const visEdges = new vis.DataSet(PERT_EDGES.map((e, i) => ({
+    id:     i,
+    from:   e.from,
+    to:     e.to,
+    arrows: 'to',
+    color:  { color: '#B0A0D0', highlight: '#4B2D83', opacity: 0.8 },
+    smooth: { type: 'cubicBezier', forceDirection: 'horizontal', roundness: 0.4 },
+  })));
+
+  const container = document.getElementById('pert-network');
+  new vis.Network(container, { nodes: visNodes, edges: visEdges }, {
+    layout: {
+      hierarchical: {
+        direction:       'LR',
+        sortMethod:      'directed',
+        nodeSpacing:     130,
+        levelSeparation: 190,
+      }
+    },
+    physics: false,
+    interaction: { hover: true, zoomView: true, dragView: true },
+  });
+}
+
+// ── Update PERT Colors ───────────────────────────────────────────────────
+function updatePertColors() {
+  if (!visNodes) return;
+  visNodes.update(PERT_NODES.map(n => {
+    const c = nodeColor(n);
+    return {
+      id:    n.id,
+      color: { background: c.bg, border: c.border, highlight: { background: c.bg, border: c.border } },
+      font:  { color: c.font, size: 13 },
+    };
+  }));
+}
+
+// ── Sync Badge ───────────────────────────────────────────────────────────
+function setSyncStatus(s) {
+  const dot   = document.getElementById('sdot');
+  const label = document.getElementById('slabel');
+  dot.className = 'sdot';
+  if (s === 'live')    { label.textContent = 'Live sync';    }
+  if (s === 'syncing') { dot.classList.add('syncing'); label.textContent = 'Saving…'; }
+  if (s === 'offline') { dot.classList.add('offline'); label.textContent = 'Not connected'; }
+}
+</script>
+
+</body>
+</html>

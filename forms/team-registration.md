@@ -2,12 +2,8 @@
 
 Field-by-field content, ready to paste into Jotform, Google Forms, or similar. This is the form a chapter submits once they've committed to playing (distinct from the earlier interest form). Submitted once per team by the team captain / chapter rep.
 
-## ⚠️ Open items before publishing this form
-1. **Payment instructions** — need actual payment method/account details (Venmo handle, Cash App, check payable-to, etc.) to insert into the "Payment" section below.
-2. **OSU liability waiver** — confirm with Beth Penland (Colvin/Campus Rec — beth.penland@okstate.edu / (405) 744-5510) whether OSU already requires participants to sign an official university waiver for Colvin field use. If yes, link/attach that waiver instead of the placeholder below. If no, we'll draft a release-of-liability clause.
-3. **Code of conduct wording** — the summary below is a generic draft; have chapter leadership / risk manager review and approve final wording before publishing.
-4. **Payment due date** — this form proposes full payment due by the roster deadline (~Sept 19, 2026); confirm the chapter is fine with that default.
-5. (Optional) Decide whether a chapter risk manager/advisor countersignature is required alongside the captain's.
+## Status
+All open items resolved as of 2026-08-16 — this form is ready to build in Jotform/Google Forms. One note: if Colvin/Campus Rec later confirms OSU requires its own official participant waiver for field use, swap it in alongside (or in place of) the liability clause in Section 5.
 
 ---
 
@@ -26,8 +22,7 @@ Field-by-field content, ready to paste into Jotform, Google Forms, or similar. T
 > Entry fee: **$175** if this form is submitted by **September 5, 2026** (early-bird), **$200** after that date.
 
 - **Registration Tier** (auto/display only): Early-bird ($175) / Standard ($200) — based on submission date
-- **Intended Payment Method** (required, radio): ○ Venmo ○ Cash App ○ Check ○ Cash (in person) — *for organizer planning; payment itself is handled outside this form*
-- **Payment instructions:** *[INSERT once payment method/account is finalized — see Open Item #1]*
+- **Payment instructions (display text):** "Send your entry fee via Venmo to **@OSU-Fiji-Philanthropy**. Please include your chapter name in the payment note."
 - **Payment due date:** Full entry fee is due no later than **September 19, 2026** (the roster deadline). Registrations without payment by this date may be considered withdrawn.
 - Note: The entry fee is a donation benefiting **For the Love of Orphans** (501(c)(3), Argyle, TX) and is non-refundable once paid, including in the event of a forfeiture or no-show (see Section 5).
 
@@ -36,9 +31,9 @@ Field-by-field content, ready to paste into Jotform, Google Forms, or similar. T
 - **Eligibility Attestation** (required checkbox): "I confirm that all players on our roster are initiated, active members of [Chapter Name] as of the roster submission deadline (~Sept 19, 2026)."
 - Note: The full player-by-player roster is collected separately — see the **Player Roster Form**, due ~Sept 19, 2026.
 
-## Section 5: Team Agreement (captain signs on behalf of the whole team)
+## Section 5: Team Agreement (captain + chapter VP sign on behalf of the whole team)
 
-**Code of Conduct** *(draft — pending chapter/risk-manager review, see Open Item #3)*
+**Code of Conduct**
 - All players, coaches, and spectators from our chapter will conduct themselves in a sportsmanlike manner toward opponents, referees, and event staff.
 - Referee decisions are final.
 - Our chapter is responsible for the conduct of our own players and spectators for the duration of the event.
@@ -48,10 +43,12 @@ Field-by-field content, ready to paste into Jotform, Google Forms, or similar. T
 - If our team forfeits or fails to show for a scheduled game, we forfeit that game only.
 - The entry fee is a donation and is **non-refundable** regardless of forfeiture or withdrawal.
 
-**Liability** *(placeholder — see Open Item #2, do not publish until resolved)*
-- *[Pending confirmation of whether an official OSU/Colvin waiver applies. If not, insert a release-of-liability / assumption-of-risk clause here, captain-signed on behalf of the roster.]*
+**Liability / Assumption of Risk**
+- Our chapter acknowledges that participation in Greek Gridiron involves inherent risks of physical injury associated with flag football and outdoor athletic activity.
+- On behalf of our chapter and every player listed on our roster, we voluntarily assume all such risks and release Phi Gamma Delta – Sigma Omicron chapter, Oklahoma State University, and Oklahoma State University Campus Recreation/Colvin Recreation Center from liability for injury, loss, or damage arising from participation in this event, except in cases of gross negligence.
+- *(Note: if Colvin/Campus Rec confirms OSU has its own required participant waiver, that waiver will be used alongside or in place of this clause.)*
 
-**Signature**
+**Signature** — both required
 - **Captain Typed Full Name** (required — serves as signature)
+- **Chapter Vice President Typed Full Name** (required — serves as countersignature)
 - **Date** (required)
-- *(Optional, pending Open Item #5)* Chapter Risk Manager/Advisor Name + Signature

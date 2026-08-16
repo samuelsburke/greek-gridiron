@@ -480,9 +480,9 @@ const firebaseConfig = {
         <tr><th>Detail</th><th>Info</th></tr>
         <tr><td><strong>Format</strong></td><td>7v7 flag football tournament</td></tr>
         <tr><td><strong>Host</strong></td><td>Phi Gamma Delta — Sigma Omicron chapter (ranked #4 at OSU)</td></tr>
-        <tr><td><strong>Beneficiary</strong></td><td>A child/family in need due to illness — identify before any promotion</td></tr>
+        <tr><td><strong>Beneficiary</strong></td><td>For the Love of Orphans — 501(c)(3) nonprofit, Argyle, TX (EIN 47-4911150)</td></tr>
         <tr><td><strong>Date</strong></td><td><span class="highlight">Saturday, September 26, 2026</span>&nbsp; — OSU away at West Virginia</td></tr>
-        <tr><td><strong>Teams</strong></td><td>8–12 fraternities (22 IFC chapters = full pool); sororities support via banner/spirit competition</td></tr>
+        <tr><td><strong>Teams</strong></td><td>Men's Bracket: 8–12 fraternities (22 IFC chapters = full pool). Women's Bracket: Panhellenic sorority teams, same format.</td></tr>
         <tr><td><strong>Entry Fee</strong></td><td>$175 early-bird (cutoff ~Sept 5) / $200 standard</td></tr>
       </table>
       <div class="alert-box">
@@ -493,6 +493,7 @@ const firebaseConfig = {
     <div class="plan-card">
       <h2>Tournament Structure</h2>
       <h3>Bracket Format</h3>
+      <p>Two parallel brackets, both run with the identical format below: a <strong>Men's Bracket</strong> (IFC fraternities) and a <strong>Women's Bracket</strong> (Panhellenic sororities).</p>
       <ul>
         <li><strong>8 teams:</strong> 2 pools of 4 → top 2 from each advance → semifinals → championship</li>
         <li><strong>10–12 teams:</strong> 3 pools (3–4 teams each) → top teams advance → quarterfinals → semis → championship</li>
@@ -532,6 +533,7 @@ const firebaseConfig = {
     <div class="plan-card">
       <h2>Sorority Involvement</h2>
       <p>OSU has <strong>12 Panhellenic sororities</strong> and <strong>13 established homecoming fraternity-sorority pairs</strong> — a ready-made framework for sorority involvement.</p>
+      <p><strong>Sororities compete directly in the Women's Bracket</strong> — same 7v7 format, same pool play → playoffs → championship structure as the men's tournament. On top of that competitive track, sororities also drive spirit and event energy:</p>
       <ul>
         <li><strong>Banner Competition:</strong> Each sorority paired with a competing fraternity creates a banner; judged by a neutral party</li>
         <li><strong>"Greek Goddess" Spirit Award:</strong> Awarded to the sorority with the best overall crowd energy, cheering, and spirit throughout the day — adds real incentive beyond the banner comp</li>
@@ -583,7 +585,7 @@ const firebaseConfig = {
 
     <div class="plan-card">
       <h2>Open Items</h2>
-      <div class="open-item">1. <strong>Beneficiary:</strong> Identify the specific child/family or partner organization before promoting the event</div>
+      <div class="open-item">1. <strong>Beneficiary:</strong> Confirmed — For the Love of Orphans (501(c)(3), Argyle, TX)</div>
       <div class="open-item">2. <strong>Championship venue:</strong> Get yes/no on OSU practice facility turf before committing in promotions</div>
       <div class="open-item">3. <strong>Colvin field cost:</strong> Get rental quote from Beth Penland; build into budget</div>
       <div class="open-item">4. <strong>Early-bird cutoff:</strong> Recommend ~Sept 5, 2026</div>
@@ -651,7 +653,7 @@ const GROUPS = [
     items: [
       { id: "contact_colvin",      text: "Contact Beth Penland at Colvin for field reservation + cost quote — beth.penland@okstate.edu / (405) 744-5510 — submit form 7+ business days before event", pert: "contact_colvin" },
       { id: "osu_turf",            text: "Get yes/no from contact on OSU practice facility turf for championship game",                                    pert: "osu_turf" },
-      { id: "identify_beneficiary",text: "Identify specific family or charity beneficiary — required before any public promotion",                         pert: "identify_beneficiary" },
+      { id: "identify_beneficiary",text: "Beneficiary confirmed: For the Love of Orphans (501(c)(3), Argyle, TX) — coordinate promotion/PR materials",     pert: "identify_beneficiary" },
       { id: "commission_trophy",   text: "Source or commission traveling trophy (football-shaped, engravable annually with winning house)",                 pert: "commission_trophy" },
     ]
   },
@@ -659,7 +661,7 @@ const GROUPS = [
     id: "outreach", label: "Outreach", icon: "📣",
     items: [
       { id: "send_registration",   text: "Send interest/registration forms to all 22 IFC chapters",                                                       pert: "send_registration" },
-      { id: "panhellenic",         text: "Coordinate with Panhellenic for sorority banner competition and ticket sales push",                              pert: "panhellenic" },
+      { id: "panhellenic",         text: "Coordinate with Panhellenic for Women's Bracket team registration, plus banner competition and ticket sales push", pert: "panhellenic" },
     ]
   },
   {
@@ -679,14 +681,14 @@ const GROUPS = [
       { id: "assign_referees",     text: "Assign referees to each field (Colvin officials or chapter RTs)",                                               pert: "assign_referees" },
       { id: "banner_judge",        text: "Designate neutral banner competition judge",                                                                    pert: null },
       { id: "goddess_judge",       text: "Designate Greek Goddess spirit award judge",                                                                    pert: null },
-      { id: "closing_ceremony",    text: "Plan closing ceremony: recognize family/beneficiary, present donation, award trophy — all wrapped by 9:30 PM (Stillwater noise ordinance)", pert: null },
+      { id: "closing_ceremony",    text: "Plan closing ceremony: recognize For the Love of Orphans, present donation, award trophies (men's + women's bracket) — all wrapped by 9:30 PM (Stillwater noise ordinance)", pert: null },
     ]
   },
   {
     id: "postEvent", label: "Post-Event", icon: "🎉",
     items: [
       { id: "post_results",        text: "Post final standings and winners on social media — tag all participating houses",                                pert: "post_event" },
-      { id: "present_donation",    text: "Present check or donation to family/charity — photo opportunity for chapter PR",                                pert: "post_event" },
+      { id: "present_donation",    text: "Present check or donation to For the Love of Orphans — photo opportunity for chapter PR",                        pert: "post_event" },
       { id: "survey_houses",       text: "Survey participating houses for Year 2 feedback",                                                               pert: "post_event" },
       { id: "store_trophy",        text: "Store trophy with winning house; document tradition for future philanthropy chairs",                             pert: "post_event" },
     ]

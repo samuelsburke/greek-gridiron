@@ -1,0 +1,38 @@
+{
+  "event": {
+    "name": "Greek Gridiron",
+    "date": "2026-09-26",
+    "format": "7v7 flag football tournament",
+    "host": "Phi Gamma Delta — Sigma Omicron chapter, Oklahoma State University"
+  },
+  "beneficiary": {
+    "name": "For the Love of Orphans",
+    "entityType": "501(c)(3) nonprofit",
+    "location": "Argyle, TX",
+    "ein": "47-4911150",
+    "taxExemptSince": "2015-10",
+    "note": "Confirmed beneficiary as of 2026-08-16. Not to be confused with the separate, unrelated 'Love of Orphans Foundation' (Norwalk, CT)."
+  },
+  "brackets": [
+    {
+      "name": "Men's Bracket",
+      "teams": "8–12 IFC fraternities",
+      "structure": "Pool play → playoffs → championship, 7v7 flag football"
+    },
+    {
+      "name": "Women's Bracket",
+      "teams": "Panhellenic sorority teams",
+      "structure": "Same 7v7 format and bracket structure as the men's bracket — pool play → playoffs → championship"
+    }
+  ],
+  "sororityInvolvement": {
+    "competitive": "Sororities field full competitive teams in the Women's Bracket, mirroring the men's tournament.",
+    "spirit": [
+      "Banner competition judged by a neutral party",
+      "\"Greek Goddess\" Spirit Award for best crowd energy/spirit",
+      "Homecoming pairing hook for fan engagement",
+      "Ticket block sales",
+      "Concession booth volunteering"
+    ]
+  }
+}

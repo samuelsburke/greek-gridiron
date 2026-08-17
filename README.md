@@ -1,1 +1,1 @@
-# greek-gridiron
+# Greek Gridiron 2026
